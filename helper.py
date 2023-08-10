@@ -48,10 +48,10 @@ def sell_buy_price(items):
     sb_temp = []
     for i in range(0, 4):
         sb_temp.append({
-            "buy Price": sb_market.json()["marketplace_item_listings"][sb_id]['buy'][0]["unit_price"],
-            "buy Quantity":sb_market.json()["marketplace_item_listings"][sb_id]['buy'][0]["quantity"],
-            "Sell Price": sb_market.json()["marketplace_item_listings"][sb_id]['sell'][0]["unit_price"],
-            "Sell Quantity": sb_market.json()["marketplace_item_listings"][sb_id]['sell'][0]["quantity"]
+            "B P": sb_market.json()["marketplace_item_listings"][sb_id]['buy'][i]["unit_price"],
+            "B Q":sb_market.json()["marketplace_item_listings"][sb_id]['buy'][i]["quantity"],
+            "S P": sb_market.json()["marketplace_item_listings"][sb_id]['sell'][i]["unit_price"],
+            "S Q": sb_market.json()["marketplace_item_listings"][sb_id]['sell'][i]["quantity"]
         })
     sb_summary = pd.DataFrame(sb_temp)
 

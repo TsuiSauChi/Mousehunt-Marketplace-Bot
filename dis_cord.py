@@ -296,6 +296,9 @@ def dis_cord_helper():
 
         # content.to_excel('output.xlsx', index=False)
 
+        print("Discord Rejected Listings")
+        print(error)
+
         return status_code, sell, buy
     else:
         return status_code, [], []
