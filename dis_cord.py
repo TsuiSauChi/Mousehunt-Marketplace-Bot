@@ -20,7 +20,7 @@ def dis_cord():
         file_content = file.read()
 
     result = requests.get(
-        url='https://discord.com/api/v9/channels/275501342666260482/messages?limit=10',
+        url='https://discord.com/api/v9/channels/275501342666260482/messages?limit=15',
         # Might be better to replace this with an alt account session
         headers={
             "Authorization": file_content,

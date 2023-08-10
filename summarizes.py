@@ -37,6 +37,7 @@ def summarizes():
         discord_buy_group = discord_buy.groupby(['item_id'])
         for item_id, discord_buy_df in discord_buy_group:
 
+            # Remove Duplicates
             discord_buy_df.sort_values('price', ascending=False)
             rows_discord = sell[sell["item_id"] == item_id]
 
@@ -69,33 +70,34 @@ def summarizes():
 
     '''
 
-                # Discord Selling
-                discord_sell_group = discord_sell.groupby(['item_id'])
-                for item_id, discord_sell_df in discord_sell_group:
+        # Discord Selling
+        discord_sell_group = discord_sell.groupby(['item_id'])
+        for item_id, discord_sell_df in discord_sell_group:
+            print()
 
-                    discord_sell_df.sort_values('price', ascending=False)
-                    rows_discord = buy[buy["item_id"] == item_id]
+            discord_sell_df.sort_values('price', ascending=False)
+            rows_discord = buy[buy["item_id"] == item_id]
 
-                    # Check Profit
-                    if discord_sell_df["price"].iloc[0] < rows_discord["sell_sell"][0]:
-                        item_name = rows_discord["item_name"].iloc[0]
-                        name = ""
-                        discord_price = ""
-                        discord_quantity = ""
-                        for _, row in discord_sell_df.iterrows():
-                            name = name + str(row["author"]) + " | "
-                            discord_price = discord_price + str(row["price"]) + " | "
-                            discord_quantity = discord_quantity + str(row["quantity"]) + " | "
+            # Check Profit
+            if discord_sell_df["price"].iloc[0] < rows_discord["sell_sell"][0]:
+                item_name = rows_discord["item_name"].iloc[0]
+                name = ""
+                discord_price = ""
+                discord_quantity = ""
+                for _, row in discord_sell_df.iterrows():
+                    name = name + str(row["author"]) + " | "
+                    discord_price = discord_price + str(row["price"]) + " | "
+                    discord_quantity = discord_quantity + str(row["quantity"]) + " | "
 
-                        quick_price = ""
-                        quick_quantity = ""
-                        optimal_price = ""
-                        for _, row in rows_discord.iterrows(): 
-                            quick_price = quick_price + str(row["buy_buy"]) + " | "
-                            quick_quantity = quick_quantity + str(row["quantity"]) + " | "
-                            optimal_price = optimal_price + str(row["sell_sell"]) + " | "
+                quick_price = ""
+                quick_quantity = ""
+                optimal_price = ""
+                for _, row in rows_discord.iterrows(): 
+                    quick_price = quick_price + str(row["buy_buy"]) + " | "
+                    quick_quantity = quick_quantity + str(row["quantity"]) + " | "
+                    optimal_price = optimal_price + str(row["sell_sell"]) + " | "
 
-                        sell_summary += f'''*Item Name:* {item_name}
+                sell_summary += f'''*Item Name:* {item_name}
     *Discord Name:* {name} 
     *Discord B Price:* {discord_price} 
     *Discord B Quantity:* {discord_quantity} 

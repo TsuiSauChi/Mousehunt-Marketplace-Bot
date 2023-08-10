@@ -14,7 +14,7 @@ TOKEN = file_content
 USER_ID = "335838693"
 
 # Time interval between messages (in seconds)
-INTERVAL = 1800
+INTERVAL = 1000
 
 # Create the bot object
 bot = telegram.Bot(token=TOKEN)
