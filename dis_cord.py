@@ -20,7 +20,7 @@ def dis_cord():
         file_content = file.read()
 
     result = requests.get(
-        url='https://discord.com/api/v9/channels/275501342666260482/messages?limit=100',
+        url='https://discord.com/api/v9/channels/275501342666260482/messages?limit=10',
         # Might be better to replace this with an alt account session
         headers={
             "Authorization": file_content,
@@ -273,6 +273,34 @@ def extract_item_id(n_gram, error):
             
     return n_gram, error
 
+def split_sell_buy(n_gram):
+    grouped = n_gram.groupby('listing_type')
+    grouped_dfs = {group: group_df for group, group_df in grouped}
+    buy, sell =  grouped_dfs['b'], grouped_dfs['s']
+    buy = buy.sort_values(by='item_id')
+    sell = sell.sort_values(by='item_id')
+
+    return sell, buy
+
+def dis_cord_helper():
+    status_code, content = dis_cord()
+    if status_code == 200:
+        content, error = custom_ngrams(content, 10)
+        content = lemmatize_helper(content)
+        content = extract_listing_type(content)
+        content = extract_quantity(content)
+        content = extract_price(content)
+        content, error = extract_item_id(content, error)
+
+        sell, buy = split_sell_buy(content)
+
+        # content.to_excel('output.xlsx', index=False)
+
+        return status_code, sell, buy
+    else:
+        return status_code, [], []
+
+
 # data = {
 #     'author': ["pong"],
 #     'content': ["Selling\nCCC 0.18 | RSPC 0.6 | REPC 2.1\nBottled Wind 3.7 | USC 1.4 |  FBF 3.8 \nZugzwang's Leftover Rock 14000\nCTOT 2900 | CRM 0.32 | CC 16\n2023 0.25 | rift 2023 0.8 | UWC 3.5\nDBC 1.1 | SDBC 2 | EDBC 3 | UDBC 3.5 \nRonza's Beanstalk Supply Ship 6500\n2months lgs 500 | GSC 0.95\nCF 8.5 (>500 8.3) | 4months lgs 950"]
@@ -284,17 +312,3 @@ def extract_item_id(n_gram, error):
 # content = extract_quantity(content)
 
 
-status_code, content = dis_cord()
-if status_code == 200:
-    content, error = custom_ngrams(content, 10)
-    content = lemmatize_helper(content)
-    content = extract_listing_type(content)
-    content = extract_quantity(content)
-    content = extract_price(content)
-    content, error = extract_item_id(content, error)
-
-    content.to_excel('output.xlsx', index=False)
-
-    print(error)
-else:
-    print(status_code)

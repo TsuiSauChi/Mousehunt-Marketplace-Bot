@@ -44,6 +44,17 @@ def sell_buy_price(items):
     sb_sell_price = sb_market.json()["marketplace_item_listings"][sb_id]['sell'][0]["unit_price"]
     sb_buy_price = sb_market.json()["marketplace_item_listings"][sb_id]['buy'][0]["unit_price"]
 
+    # SB Summary
+    sb_temp = []
+    for i in range(0, 4):
+        sb_temp.append({
+            "buy Price": sb_market.json()["marketplace_item_listings"][sb_id]['buy'][0]["unit_price"],
+            "buy Quantity":sb_market.json()["marketplace_item_listings"][sb_id]['buy'][0]["quantity"],
+            "Sell Price": sb_market.json()["marketplace_item_listings"][sb_id]['sell'][0]["unit_price"],
+            "Sell Quantity": sb_market.json()["marketplace_item_listings"][sb_id]['sell'][0]["quantity"]
+        })
+    sb_summary = pd.DataFrame(sb_temp)
+
     temp=dict()
     for item_id in items:
         market = market_price(item_id, action="get_item_listings")
@@ -53,25 +64,28 @@ def sell_buy_price(items):
     #Sell on Discord (B>), Buy on Marketplace")
     #Make sure discord price is more then here")
     headers_sell=[
-        'Item ID', 
-        'Listing No',
-        'SB After Tax (Buy/Buy Price) -', 
-        'SB After Tax (Sell/Buy Price)', 
-        "SB After Tax (Buy/Sell Price)", 
-        "SB After Tax (Sell/Sell Price)",
-        "Quantity"] 
+        'item_id',
+        'item_name', 
+        'listing No',
+        'buy_buy', 
+        #'sell_buy', 
+        #"buy_sell", 
+        "sell_sell",
+        "quantity"] 
     dataset_sell = pd.DataFrame(columns=headers_sell)
     for item_id in temp:
         if len(temp[item_id]['sell']) != 0:
             item_temp = []
-            for i in range(len(temp[item_id]['sell'])):
+            #for i in range(len(temp[item_id]['sell'])):
+            for i in range(2):
                 item_temp.append([
                     # Based on aga-ation here
+                    item_id,
                     item_name(item_id), 
                     (i+1),
                     str(round((temp[item_id]['sell'][i]["unit_price"] / sb_buy_price)  * 11/10,3)),
-                    str(round((temp[item_id]['sell'][i]["unit_price"] / sb_sell_price)  * 11/10,3)),
-                    str(round((temp[item_id]['buy'][i]["unit_price"] / sb_buy_price)  * 11/10,3)),
+                    #str(round((temp[item_id]['sell'][i]["unit_price"] / sb_sell_price)  * 11/10,3)),
+                    #str(round((temp[item_id]['buy'][i]["unit_price"] / sb_buy_price)  * 11/10,3)),
                     str(round((temp[item_id]['buy'][i]["unit_price"] / sb_sell_price)  * 11/10,3)),
                     temp[item_id]['sell'][i]["quantity"]
                 ]) 
@@ -81,28 +95,31 @@ def sell_buy_price(items):
     # Buy on Discord (S>), Sell on Marketplace
     # Make sure discord price is less then here
     headers_buy = [
-        'Item ID', 
-        'Listing No',
-        'SB (Sell Price) -> Buy', 
-        "SB (Buy Price) -> Buy", 
-        'SB (Sell Price) -> Sell', 
-        "SB (Buy Price) -> Sell",
-        "Quantity"]
+        'item_id',
+        'item_name', 
+        'listing_No',
+        'buy_buy', 
+        #"sell_buy", 
+        #'buy_sell', 
+        "sell_sell",
+        "quantity"]
     dataset_buy = pd.DataFrame(columns=headers_buy)
     for item_id in temp:
         # Check if there's any listing
         if len(temp[item_id]['sell']) != 0:
             item_temp = []
-            for i in range(len(temp[item_id]['buy'])):
+            #for i in range(len(temp[item_id]['buy'])):
+            for i in range(2):
                 item_temp.append([
+                    item_id,
                     item_name(item_id), 
                     (i+1),
                     str(round(temp[item_id]['buy'][i]["unit_price"] * (9/10) / sb_sell_price,3)),
-                    str(round(temp[item_id]['buy'][i]["unit_price"] * (9/10) / sb_buy_price,3)),
-                    str(round(temp[item_id]['sell'][i]["unit_price"] * (9/10) / sb_sell_price,3)),
+                    #str(round(temp[item_id]['buy'][i]["unit_price"] * (9/10) / sb_buy_price,3)),
+                    #str(round(temp[item_id]['sell'][i]["unit_price"] * (9/10) / sb_sell_price,3)),
                     str(round(temp[item_id]['sell'][i]["unit_price"] * (9/10) / sb_buy_price,3)),
                     temp[item_id]['sell'][i]["quantity"]
                 ])
         df_row = pd.DataFrame(item_temp, columns=headers_buy)
         dataset_buy = dataset_buy.append(df_row)
-    return dataset_sell, dataset_buy
+    return sb_summary, dataset_sell, dataset_buy
