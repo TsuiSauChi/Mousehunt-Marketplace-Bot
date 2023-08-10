@@ -19,13 +19,29 @@ def dis_cord():
         # Read the entire content of the file
         file_content = file.read()
 
-    return requests.get(
+    result = requests.get(
         url='https://discord.com/api/v9/channels/275501342666260482/messages?limit=100',
         # Might be better to replace this with an alt account session
         headers={
             "Authorization": file_content,
         }
     )
+
+    if result.status_code == 200:
+        resultJson = result.json()
+        headers = ["author", "content"]
+        temp = []
+        for i in resultJson:
+            temp.append([
+                i["author"]["username"],
+                i["content"].lower()
+            ])
+        content_df = pd.DataFrame(columns=headers)
+        df_row = pd.DataFrame(temp, columns=headers)
+        content_df = content_df.append(df_row)
+        return result.status_code, content_df
+    else:
+        return result.status_code, []
 
 def remove_discord_emojis(input_string):
     # Pattern to match Unicode emojis used in Discord
@@ -82,8 +98,8 @@ def is_numeric(input_string):
 # 10. Return n-gram
 def custom_ngrams(content, WordsToCombine):
     headers = ["author", "content", "orginial"]
-    error_df = pd.DataFrame(columns=headers)
-    words_df = pd.DataFrame(columns=headers)
+    error_df = pd.DataFrame()
+    words_df = pd.DataFrame()
 
     # Remove duplicates and keep the first occurrence
     content = content.drop_duplicates()
@@ -146,6 +162,7 @@ def custom_ngrams(content, WordsToCombine):
         for i in words:
             for j in delete_words:
                 if i == j:
+                    error_df.append(row, ignore_index=True)
                     rows_to_delete.append(index)
     content_split = content_split.drop(rows_to_delete)
 
@@ -179,25 +196,21 @@ def custom_ngrams(content, WordsToCombine):
                 del words[1]
 
             # Return 1-3 terms
-            words_temp = []
-            error_temp = []
             filiter_words_1 = ["s>", "b>", "s", "b"]
             for i in range(1):
                 if (words[0] not in filiter_words_2 and words[0][-2:] not in filiter_words_1):
-                    error_temp.append([
-                        row["author"],
-                        words[i:i+WordsToCombine],
-                        row["orginial"]
-                    ])
+                    error_df = error_df.append({
+                        "author": row["author"],
+                        "content": words[i:i+WordsToCombine],
+                        "orginial": row["orginial"]
+                    }, ignore_index=True)
                 else:
                     words[0] = words[0][0:1]
-                    words_temp.append([
-                        row["author"],
-                        words[i:i+WordsToCombine],
-                        row["orginial"]
-                    ])
-            words_df = words_df.append(pd.DataFrame(words_temp, columns=headers))
-            error_df = error_df.append(pd.DataFrame(error_temp, columns=headers))
+                    words_df = words_df.append({
+                        "author": row["author"],
+                        "content": words[i:i+WordsToCombine],
+                        "orginial": row["orginial"]
+                    }, ignore_index=True)
 
     # Filiter out listing that is strikeout
     rows_to_delete = []
@@ -240,8 +253,9 @@ def extract_price(n_gram):
                 break
     return n_gram
 
-def extract_item_id(n_gram):
+def extract_item_id(n_gram, error):
     n_gram['item_id'] = '-'
+    rows_to_delete= []
     for _, row in n_gram.iterrows():
         for i in row["content"]:
             if(item_name(i) is not False):
@@ -252,7 +266,12 @@ def extract_item_id(n_gram):
             combined_string = " ".join(row['content'][1:-1])
             if(item_name(combined_string) is not False):
                 row['item_id'] = item_name(combined_string)
-    return n_gram
+            else:
+                error = error.append(row, ignore_index=True)
+                rows_to_delete.append(index)
+    n_gram = n_gram.drop(rows_to_delete)
+            
+    return n_gram, error
 
 # data = {
 #     'author': ["pong"],
@@ -265,34 +284,17 @@ def extract_item_id(n_gram):
 # content = extract_quantity(content)
 
 
-result = dis_cord()
-if result.status_code == 200:
-    result = result.json()
-    headers = ["author", "content"]
-    temp = []
-    for i in result:
-        temp.append([
-            i["author"]["username"],
-            i["content"].lower()
-        ])
-
-    content_df = pd.DataFrame(columns=headers)
-    df_row = pd.DataFrame(temp, columns=headers)
-    content_df = content_df.append(df_row)
-
-
-    content, error = custom_ngrams(content_df, 10)
+status_code, content = dis_cord()
+if status_code == 200:
+    content, error = custom_ngrams(content, 10)
     content = lemmatize_helper(content)
     content = extract_listing_type(content)
     content = extract_quantity(content)
     content = extract_price(content)
-    content = extract_item_id(content)
+    content, error = extract_item_id(content, error)
 
     content.to_excel('output.xlsx', index=False)
-else:
-    print(result.text)
 
-# Next 
-# 1. Drop missing value rows
-# 2. Do evulation 
-# 3. Compare with market price
+    print(error)
+else:
+    print(status_code)
